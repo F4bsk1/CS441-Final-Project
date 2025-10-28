@@ -1,0 +1,17 @@
+#.gitignore for CS441-Final-Project
+# Ignore local Python virtual environment
+.venv/
+
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest cache
+.pytest_cache/
+
+# Environment files
+.env
+
+# macOS
+.DS_Store
