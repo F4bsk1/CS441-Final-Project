@@ -17,6 +17,11 @@ Activation and installation (macOS / Linux, bash):
 	cd /Users/Fabbe/UIUC/CS441/CS441-Final-Project
 	source .venv/bin/activate
 	```
+	```bash
+	cd /Users/tobiashuber/Documents/GitHub/CS441-Final-Project
+	source .venv/bin/activate
+	```
+	
 
 2. Install dependencies:
 
@@ -35,3 +40,10 @@ git commit -m "Update Python dependencies"
 
 If you'd like, I can pin specific versions in `requirements.txt` (recommended) or
 install these packages into the created `.venv` to verify installation; tell me which you prefer.
+
+3. Run Streamlit
+
+To start the streamlit server:
+```bash
+streamlit run app.py
+```
