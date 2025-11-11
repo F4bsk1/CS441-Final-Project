@@ -28,8 +28,12 @@ if "df_preprocessed" in st.session_state and not st.session_state.df_preprocesse
     if st.toggle("Show Grouped by Day and Product Group Data"):
         st.subheader("Grouped by Day and Product Group Data")
         st.dataframe(df_grouped_by_day_and_product_group.head())    
+    if st.toggle("Show Grouped by Day and Main Group Data"):
+        st.subheader("Grouped by Day and Main Group Data")
+        st.dataframe(st.session_state.df_grouped_by_day_and_main_group.head())
 
         # Create the line plot
+    if 
     fig = px.line(
         df_grouped_by_day_and_product_group,
         x='DATE',
