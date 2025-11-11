@@ -12,12 +12,14 @@ st.set_page_config(
 
 st.title("Visualize Data")
 
+st.subheader("Explore Preprocessed Data")
+
 # Check if preprocessed data exists
 if "df_preprocessed" in st.session_state and not st.session_state.df_preprocessed.empty:
     df_preprocessed = st.session_state.df_preprocessed
     df_grouped_by_day_and_article = st.session_state.df_grouped_by_day_and_article
     df_grouped_by_day_and_product_group = st.session_state.df_grouped_by_day_and_product_group
-
+    df_grouped_by_day_and_main_group = st.session_state.df_grouped_by_day_and_main_group
 
     if st.toggle("Show Preprocessed Data"):
         st.subheader("Preview of Preprocessed Data")
@@ -33,26 +35,51 @@ if "df_preprocessed" in st.session_state and not st.session_state.df_preprocesse
         st.dataframe(st.session_state.df_grouped_by_day_and_main_group.head())
 
         # Create the line plot
-    if 
-    fig = px.line(
-        df_grouped_by_day_and_product_group,
-        x='DATE',
-        y='QUANTITY',
-        color='PRODUCT_GROUP',
-        title='Quantity Over Time by Product Group',
-        markers=True
-    )
+    st.subheader("Explore Graph")
 
-    fig.update_layout(
-        xaxis_title="Date",
-        yaxis_title="Quantity",
-        legend_title="Product Group",
-        template="seaborn",
-        width=1200,   # increase width
-        height=700    # increase height
-    )
+    if st.toggle("Show Quantity Over Time by Product Group"):
+        st.subheader("Quantity Over Time by Product Group")
+        fig = px.line(
+            df_grouped_by_day_and_product_group,
+            x='DATE',
+            y='QUANTITY',
+            color='PRODUCT_GROUP',
+            title='Quantity Over Time by Product Group',
+            markers=True
+        )
 
-    st.plotly_chart(fig, use_container_width=True)
+        fig.update_layout(
+            xaxis_title="Date",
+            yaxis_title="Quantity",
+            legend_title="Product Group",
+            template="seaborn",
+            width=1200,   # increase width
+            height=700    # increase height
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+    if st.toggle("Show Quantity Over Time by Main Group"):
+        st.subheader("Quantity Over Time by Main Group")
+        fig = px.line(
+            df_grouped_by_day_and_main_group,
+            x='DATE',
+            y='QUANTITY',
+            color='MAIN_GROUP',
+            title='Quantity Over Time by Main Group',
+            markers=True
+        )
+
+        fig.update_layout(
+            xaxis_title="Date",
+            yaxis_title="Quantity",
+            legend_title="Product Group",
+            template="seaborn",
+            width=1200,   # increase width
+            height=700    # increase height
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
 
 
 
