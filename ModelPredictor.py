@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 
 class ModelPredictor(ABC):
+    """ Tobi please change to whetever is suitable from the streamlit UI preprocessing,
+        Additional_params is a dictionary which we can pass specific model params"""
     def __init__(self, name, time_window, granularity, additional_params=None):
         self.name = name
         self.time_window = time_window
