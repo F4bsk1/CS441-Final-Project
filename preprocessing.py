@@ -1,4 +1,6 @@
 import pandas as pd
+import numpy as np
+from SchnitzelPredictorDataset import SchnitzelPredictorDataset
 
 class Preprocessor:
     def __init__(self, df_transaction_details, df_transaction_header, df_product_groups, df_articles):
@@ -31,38 +33,11 @@ class Preprocessor:
         df_merged = pd.merge(self.df_transaction_details, self.df_transaction_header, on='DOC_KEY', how='outer')
         df_merged = pd.merge(df_merged, self.df_articles, on='SKU', how='left')
         df_merged = pd.merge(df_merged, self.df_product_groups, on='PRODUCT_GROUP_NO', how='left')
-        return df_merged
+
+        df_merged['DATE'] = pd.to_datetime(df_merged['DATE'], format='%d.%m.%y')
+
+        schnitzelPredictorDataset = SchnitzelPredictorDataset(df_merged)
+
+        return schnitzelPredictorDataset
 
 
-    def create_grouped_by_day_and_article(self, df_preprocessed):
-        # Convert DATE to datetime
-        df_preprocessed['DATE'] = pd.to_datetime(df_preprocessed['DATE'], format='%d.%m.%y')
-
-        # Group by DATE and aggregate
-        df_grouped_by_day = df_preprocessed.groupby(['DATE', 'ARTICLE']).agg({
-            'QUANTITY': 'sum',
-        }).reset_index()
-
-        return df_grouped_by_day
-    
-    def create_grouped_by_day_and_product_group(self, df_preprocessed):
-        # Convert DATE to datetime
-        df_preprocessed['DATE'] = pd.to_datetime(df_preprocessed['DATE'], format='%d.%m.%y')
-
-        # Group by DATE and aggregate
-        df_grouped_by_day = df_preprocessed.groupby(['DATE', 'PRODUCT_GROUP']).agg({
-            'QUANTITY': 'sum',
-        }).reset_index()
-
-        return df_grouped_by_day
-    
-    def create_grouped_by_day_and_main_group(self, df_preprocessed):
-        # Convert DATE to datetime
-        df_preprocessed['DATE'] = pd.to_datetime(df_preprocessed['DATE'], format='%d.%m.%y')
-
-        # Group by DATE and aggregate
-        df_grouped_by_day = df_preprocessed.groupby(['DATE', 'MAIN_GROUP']).agg({
-            'QUANTITY': 'sum',
-        }).reset_index()
-
-        return df_grouped_by_day

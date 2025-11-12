@@ -49,24 +49,11 @@ st.title("Data Analysis")
 if st.button("Preprocess Data"):
     if transaction_details is not None and transaction_header is not None and product_groups is not None and articles is not None:
         preprocessor = Preprocessor(df_transaction_details, df_transaction_header, df_product_groups, df_articles)
-        st.session_state.df_preprocessed = preprocessor.preprocess()
+        st.session_state.schnitzelPredictorDataset = preprocessor.preprocess()
         
         #st.success("Data preprocessed successfully!")
         st.subheader("Preview of Preprocessed Data")
-        st.dataframe(st.session_state.df_preprocessed.head())
-
-        st.session_state.df_grouped_by_day_and_article = preprocessor.create_grouped_by_day_and_article(st.session_state.df_preprocessed)
-        st.subheader("Preview of Grouped by Day and Article Data")
-        st.dataframe(st.session_state.df_grouped_by_day_and_article.head())
-
-
-        st.session_state.df_grouped_by_day_and_product_group = preprocessor.create_grouped_by_day_and_product_group(st.session_state.df_preprocessed)
-        st.subheader("Preview of Grouped by Day and Product Group Data")
-        st.dataframe(st.session_state.df_grouped_by_day_and_product_group.head())
-
-        st.session_state.df_grouped_by_day_and_main_group = preprocessor.create_grouped_by_day_and_main_group(st.session_state.df_preprocessed)
-        st.subheader("Preview of Grouped by Day and Main Group Data")
-        st.dataframe(st.session_state.df_grouped_by_day_and_main_group.head())
+        st.dataframe(st.session_state.schnitzelPredictorDataset.get_dataset().head())
 
     else:
         st.error("Please upload all required files before preprocessing.")

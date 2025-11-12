@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
+import numpy as np
+from SchnitzelPredictorDataset import SchnitzelPredictorDataset
 
 st.set_page_config(
     page_title="Data Visualization",
@@ -16,10 +18,10 @@ st.subheader("Explore Preprocessed Data")
 
 # Check if preprocessed data exists
 if "df_preprocessed" in st.session_state and not st.session_state.df_preprocessed.empty:
-    df_preprocessed = st.session_state.df_preprocessed
-    df_grouped_by_day_and_article = st.session_state.df_grouped_by_day_and_article
-    df_grouped_by_day_and_product_group = st.session_state.df_grouped_by_day_and_product_group
-    df_grouped_by_day_and_main_group = st.session_state.df_grouped_by_day_and_main_group
+    df_preprocessed = st.session_state.schnitzelPredictorDataset.get_dataset()
+    df_grouped_by_day_and_article = st.session_state.schnitzelPredictorDataset.get_grouped_dataset(grouping="ARTICLE")
+    df_grouped_by_day_and_product_group = st.session_state.schnitzelPredictorDataset.get_grouped_dataset(grouping="PRODUCT_GROUP")
+    df_grouped_by_day_and_main_group = st.session_state.schnitzelPredictorDataset.get_grouped_dataset(grouping="MAIN_GROUP")
 
     if st.toggle("Show Preprocessed Data"):
         st.subheader("Preview of Preprocessed Data")
