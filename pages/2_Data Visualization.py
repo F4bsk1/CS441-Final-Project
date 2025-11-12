@@ -14,10 +14,11 @@ st.set_page_config(
 
 st.title("Visualize Data")
 
-st.subheader("Explore Preprocessed Data")
 
 # Check if preprocessed data exists
-if "df_preprocessed" in st.session_state and not st.session_state.df_preprocessed.empty:
+if "schnitzelPredictorDataset" in st.session_state:
+    st.subheader("Explore Preprocessed Data")
+
     df_preprocessed = st.session_state.schnitzelPredictorDataset.get_dataset()
     df_grouped_by_day_and_article = st.session_state.schnitzelPredictorDataset.get_grouped_dataset(grouping="ARTICLE")
     df_grouped_by_day_and_product_group = st.session_state.schnitzelPredictorDataset.get_grouped_dataset(grouping="PRODUCT_GROUP")
@@ -34,7 +35,7 @@ if "df_preprocessed" in st.session_state and not st.session_state.df_preprocesse
         st.dataframe(df_grouped_by_day_and_product_group.head())    
     if st.toggle("Show Grouped by Day and Main Group Data"):
         st.subheader("Grouped by Day and Main Group Data")
-        st.dataframe(st.session_state.df_grouped_by_day_and_main_group.head())
+        st.dataframe(df_grouped_by_day_and_main_group.head())
 
         # Create the line plot
     st.subheader("Explore Graph")
@@ -114,4 +115,4 @@ if "df_preprocessed" in st.session_state and not st.session_state.df_preprocesse
      #   ax.set_title(f"{y_col} vs {x_col}")
      #   st.pyplot(fig)
 else:
-    st.warning("⚠️ Preprocessed data not found. Please run preprocessing first.")
+    st.warning("Preprocessed data not found. Please run preprocessing first.")
