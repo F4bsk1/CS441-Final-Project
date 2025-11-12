@@ -66,7 +66,7 @@ if "schnitzelPredictorDataset" in st.session_state:
                 st.text("Training XGBoost model...")
                 # Placeholder for XGBoost training logic
                 model_predictor = XGBoostPredictor(hyperparameter_list={'max_depth': [3, 5, 7], 'learning_rate': [0.01, 0.1, 0.2]})
-                results = model_predictor.run(st.session_state.train_set, st.session_state.validation_set, st.session_state.test_set)
+                results, eval = model_predictor.run(st.session_state.train_set, st.session_state.validation_set, st.session_state.test_set)
                 
             elif model == 'LSTM':
                 st.text("Training LSTM model...")
@@ -80,6 +80,8 @@ if "schnitzelPredictorDataset" in st.session_state:
     st.subheader("Model Evaluation")
     if st.session_state.model_trained:
         st.dataframe(results)
+        st.text(f"Root Mean Squared Error (RMSE): {eval[0]}")
+        st.text(f"R-squared (R2) Score: {eval[1]}")
 
     st.subheader("Show Predictions")
 

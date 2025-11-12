@@ -41,7 +41,9 @@ class ModelPredictor(ABC):
         predictions = np.round(predictions)  #round to nearest integer
         test_X['QUANTITY_PREDICTIONS'] = predictions
         test_X['QUANTITY_TRUE'] = test_y.values
-        return test_X
+
+        
+        return test_X, self.evaluate(test_y, predictions)
 
     @abstractmethod
     def fit(self, train_X, train_y, hyperparameters = None):
