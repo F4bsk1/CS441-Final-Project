@@ -53,7 +53,7 @@ if st.button("Preprocess Data"):
         
         #st.success("Data preprocessed successfully!")
         st.subheader("Preview of Preprocessed Data")
-        st.dataframe(st.session_state.schnitzelPredictorDataset.get_dataset().head())
+        st.dataframe(st.session_state.schnitzelPredictorDataset.get_dataset())
 
     else:
         st.error("Please upload all required files before preprocessing.")

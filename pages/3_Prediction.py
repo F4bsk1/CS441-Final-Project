@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
-from XGBoost import XGBoostPredictor
+from CustomXGBoost import XGBoostPredictor
 from ModelPredictor import ModelPredictor
 
 st.set_page_config(
@@ -35,22 +35,23 @@ if "schnitzelPredictorDataset" in st.session_state:
 
     if st.button("Create Data Splits"):
         dataset.create_split_annotated_dataset(val_split_days=val_split_days, test_split_days=test_split_days)
+        st.session_state.train_set, st.session_state.validation_set, st.session_state.test_set = dataset.get_dataset_splits(grouping)
         st.success("Data splits created successfully!")
         st.session_state.split_done = True
 
     if st.toggle("Show Split Dataset"):
         try:
-            train_set, validation_set, test_set = dataset.get_dataset_splits(grouping)
+            
             
             st.subheader("Training Set")
-            st.text(f"Training set contains {train_set.shape[0]} records from {train_set['DATE'].min().date()} to {train_set['DATE'].max().date()}.")
-            st.dataframe(train_set)
+            st.text(f"Training set contains {st.session_state.train_set.shape[0]} records from {st.session_state.train_set['DATE'].min().date()} to {st.session_state.train_set['DATE'].max().date()}.")
+            st.dataframe(st.session_state.train_set)
             st.subheader("Validation Set")
-            st.text(f"Validation set contains {validation_set.shape[0]} records from {validation_set['DATE'].min().date()} to {validation_set['DATE'].max().date()}.")
-            st.dataframe(validation_set)
+            st.text(f"Validation set contains {st.session_state.validation_set.shape[0]} records from {st.session_state.validation_set['DATE'].min().date()} to {st.session_state.validation_set['DATE'].max().date()}.")
+            st.dataframe(st.session_state.validation_set)
             st.subheader("Test Set")
-            st.text(f"Test set contains {test_set.shape[0]} records from {test_set['DATE'].min().date()} to {test_set['DATE'].max().date()}.")
-            st.dataframe(test_set)
+            st.text(f"Test set contains {st.session_state.test_set.shape[0]} records from {st.session_state.test_set['DATE'].min().date()} to {st.session_state.test_set['DATE'].max().date()}.")
+            st.dataframe(st.session_state.test_set)
 
         except ValueError as e:
             st.error(str(e))
@@ -65,8 +66,8 @@ if "schnitzelPredictorDataset" in st.session_state:
                 st.text("Training XGBoost model...")
                 # Placeholder for XGBoost training logic
                 model_predictor = XGBoostPredictor(hyperparameter_list={'max_depth': [3, 5, 7], 'learning_rate': [0.01, 0.1, 0.2]})
-                results = model_predictor.run(train_set, validation_set, test_set)
-                st.text(results)
+                results = model_predictor.run(st.session_state.train_set, st.session_state.validation_set, st.session_state.test_set)
+                
             elif model == 'LSTM':
                 st.text("Training LSTM model...")
                 # Placeholder for LSTM training logic
@@ -77,6 +78,8 @@ if "schnitzelPredictorDataset" in st.session_state:
             st.session_state.model_trained = True
 
     st.subheader("Model Evaluation")
+    if st.session_state.model_trained:
+        st.dataframe(results)
 
     st.subheader("Show Predictions")
 

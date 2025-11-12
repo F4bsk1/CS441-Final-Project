@@ -71,11 +71,11 @@ class SchnitzelPredictorDataset:
 
     def _create_grouped_by_day(self, df_preprocessed, feature):
         if "SPLIT" in df_preprocessed.columns:
-            df_grouped_by_day = df_preprocessed.groupby(['DATE', feature, 'SPLIT']).agg({
+            df_grouped_by_day = df_preprocessed.groupby(['DATE', 'YEAR', 'MONTH', 'DAY', 'DAYOFWEEK', 'WEEKOFYEAR', 'IS_WEEKEND', feature, 'SPLIT']).agg({
                 'QUANTITY': 'sum',
             }).reset_index()
         else:   
-            df_grouped_by_day = df_preprocessed.groupby(['DATE', feature]).agg({
+            df_grouped_by_day = df_preprocessed.groupby(['DATE', 'YEAR', 'MONTH', 'DAY', 'DAYOFWEEK', 'WEEKOFYEAR', 'IS_WEEKEND', feature]).agg({
                 'QUANTITY': 'sum',
             }).reset_index()
 

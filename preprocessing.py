@@ -30,18 +30,24 @@ class Preprocessor:
         #return self.df_articles
 
         #Merge ds
+        print(self.df_transaction_details.columns)
+        print(self.df_transaction_details.head())
         df_merged = pd.merge(self.df_transaction_details, self.df_transaction_header, on='DOC_KEY', how='left')
-
-        df_merged = df_merged.groupby(['DATE', 'SKU'], as_index=False)['QUANTITY'].sum()
+        df_merged['HOUR'] = pd.to_datetime(df_merged['TIME'], format='%H:%M:%S').dt.hour
+        print(df_merged.columns)
+        print(df_merged.head())
+        df_merged = df_merged.groupby(['DATE', 'HOUR', 'SKU'], as_index=False)['QUANTITY'].sum()
         df_merged['DATE'] = pd.to_datetime(df_merged['DATE'], format='%d.%m.%y')
+
         print(df_merged.head())
         #fill skus for each day
         all_dates = pd.date_range(df_merged['DATE'].min(), df_merged['DATE'].max())
         all_skus = df_merged['SKU'].unique()
-        all_combinations = pd.MultiIndex.from_product([all_dates, all_skus], names=['DATE', 'SKU']).to_frame(index=False)
-        df_ext = pd.merge(all_combinations, df_merged, on=['DATE', 'SKU'], how='left')
+        all_hours = range(0,24)
+        all_combinations = pd.MultiIndex.from_product([all_dates, all_hours, all_skus], names=['DATE', 'HOUR', 'SKU']).to_frame(index=False)
+        df_ext = pd.merge(all_combinations, df_merged, on=['DATE', 'HOUR', 'SKU'], how='left')
         df_ext['QUANTITY'] = df_ext['QUANTITY'].fillna(0)
-        df_ext = df_ext.sort_values(['DATE', 'SKU']).reset_index(drop=True)
+        df_ext = df_ext.sort_values(['DATE', 'HOUR', 'SKU']).reset_index(drop=True)
         print(df_ext.head())
 
         #Merge products groups and articles in
@@ -49,6 +55,13 @@ class Preprocessor:
         print(df_merged.columns)
         df_merged = pd.merge(df_merged, self.df_product_groups, on='PRODUCT_GROUP_NO', how='left')
 
+        df_merged['YEAR'] = df_merged['DATE'].dt.year
+        df_merged['MONTH'] = df_merged['DATE'].dt.month
+        df_merged['DAY'] = df_merged['DATE'].dt.day
+        df_merged['DAYOFWEEK'] = df_merged['DATE'].dt.dayofweek
+        df_merged['WEEKOFYEAR'] = df_merged['DATE'].dt.isocalendar().week.astype(int)
+        df_merged['IS_WEEKEND'] = df_merged['DAYOFWEEK'].isin([5,6]).astype(int)
+        #df_merged = df_merged.drop(columns=['DATE'])
 
         schnitzelPredictorDataset = SchnitzelPredictorDataset(df_merged)
 

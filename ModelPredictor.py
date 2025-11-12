@@ -16,6 +16,12 @@ class ModelPredictor(ABC):
         """All models follow this workflow of fit -> predict -> evaluate"""
         train_X = train_df.drop(columns=['QUANTITY'])
         train_y = train_df['QUANTITY']
+        print("Training Data Samples:")
+        print("----------------------")
+        print("train_X samples:")
+        print(train_X.head())
+        print("train_y samples:")
+        print(train_y.head())
 
         val_X = val_df.drop(columns=['QUANTITY'])
         val_y = val_df['QUANTITY']
@@ -23,15 +29,19 @@ class ModelPredictor(ABC):
         test_X = test_df.drop(columns=['QUANTITY'])
         test_y = test_df['QUANTITY']
 
-        best_params = self.model.tune_hyperparameters(train_X, train_y, val_X, val_y, self.hyperparameter_list)
+        best_params = self.tune_hyperparameters(train_X, train_y, val_X, val_y, self.hyperparameter_list)
         
         final_train = pd.concat([train_df, val_df], ignore_index=True)
         final_train_X = final_train.drop(columns=['QUANTITY'])
         final_train_y = final_train['QUANTITY']
 
-        self._fit_model = self.model.fit(final_train_X, final_train_y, best_params)
-        predictions = self._fit_model.predict(test_X)
-        return self._fit_model.evaluate(test_y, predictions)
+        self._fit_model = self.fit(final_train_X, final_train_y, best_params)
+        predictions = self.predict(test_X)
+        predictions = np.maximum(predictions, 0)  #no negative predictions
+        predictions = np.round(predictions)  #round to nearest integer
+        test_X['QUANTITY_PREDICTIONS'] = predictions
+        test_X['QUANTITY_TRUE'] = test_y.values
+        return test_X
 
     @abstractmethod
     def fit(self, train_X, train_y, hyperparameters = None):
