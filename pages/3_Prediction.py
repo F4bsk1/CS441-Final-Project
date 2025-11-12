@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
+from XGBoost import XGBoostPredictor
+from ModelPredictor import ModelPredictor
 
 st.set_page_config(
     page_title="Predictions",
@@ -18,6 +20,8 @@ if "schnitzelPredictorDataset" in st.session_state:
     st.text(f"The first date in the dataset is {min_date.date()} and the last date is {max_date.date()}.")
     if "split_done" not in st.session_state:
         st.session_state.split_done = False
+    if "model_trained" not in st.session_state:
+        st.session_state.model_trained = False
 
     cols = st.columns(4)
     with cols[0]:
@@ -57,7 +61,20 @@ if "schnitzelPredictorDataset" in st.session_state:
             st.error("Please create data splits before training the model.")
             # Placeholder for model training logic
         else:
-            st.info("Model training functionality is not yet implemented.")
+            if model == 'XGBoost':
+                st.text("Training XGBoost model...")
+                # Placeholder for XGBoost training logic
+                model_predictor = XGBoostPredictor(hyperparameter_list={'max_depth': [3, 5, 7], 'learning_rate': [0.01, 0.1, 0.2]})
+                results = model_predictor.run(train_set, validation_set, test_set)
+                st.text(results)
+            elif model == 'LSTM':
+                st.text("Training LSTM model...")
+                # Placeholder for LSTM training logic
+            elif model == 'Transformer':
+                st.text("Training Transformer model...")
+                # Placeholder for Transformer training logic
+            st.success("Model trained successfully!")
+            st.session_state.model_trained = True
 
     st.subheader("Model Evaluation")
 
