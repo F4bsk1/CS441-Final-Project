@@ -56,7 +56,18 @@ if "schnitzelPredictorDataset" in st.session_state:
                             "tree_method": ["hist"],
                         }
         st.session_state.best_params = {
-                
+            'objective': 'reg:squarederror', 
+            'max_depth': 5, 
+            'learning_rate': 0.1, 
+            'n_estimators': 600, 
+            'subsample': 0.8, 
+            'colsample_bytree': 0.8, 
+            'min_child_weight': 3, 
+            'gamma': 0, 
+            'reg_alpha': 0, 
+            'reg_lambda': 1, 
+            'booster': 'gbtree', 
+            'tree_method': 'hist'
             }
         
     elif model == "SARIMA":
@@ -67,11 +78,11 @@ if "schnitzelPredictorDataset" in st.session_state:
                 "P": [0, 1, 2],
                 "D": [0, 1],
                 "Q": [0, 1, 2],
-                "s": [7] 
+                "s": [7, 30, 52, 365]
             }
         st.session_state.best_params = {
-            'order': (3, 2, 2), 
-            'seasonal_order': (2, 1, 2, 7)
+            'order': (3, 0, 2), 
+            'seasonal_order': (2, 1, 1, 7)
         }
     else:
         raise ValueError("No Model selected!")

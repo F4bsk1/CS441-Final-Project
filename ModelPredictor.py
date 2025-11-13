@@ -67,21 +67,32 @@ class ModelPredictor(ABC):
         test_y = test_df['QUANTITY']
 
         final_train = pd.concat([train_df, val_df], ignore_index=False)
-
-        #final_train = self._create_lags(final_train)
-
+    
         final_train_X = final_train.drop(columns=['QUANTITY'])
         final_train_y = final_train['QUANTITY']
 
         self._fit_model = self.fit(final_train_X, final_train_y, best_params)
         predictions = self.predict(test_X)
-        predictions = np.maximum(predictions, 0)  #no negative predictions
-        predictions = np.round(predictions)  #round to nearest integer
+        
         test_df = test_df.copy()
         test_df = test_df.rename(columns={'QUANTITY': 'QUANTITY_TRUE'})
-        test_df['QUANTITY_PREDICTIONS'] = predictions
+        
+        grouping = None
+        if 'MAIN_GROUP' in test_df.columns:
+            grouping = 'MAIN_GROUP'
+        elif 'PRODUCT_GROUP' in test_df.columns:
+            grouping = 'PRODUCT_GROUP'
+        elif 'ARTICLE' in test_df.columns:
+            grouping = 'ARTICLE'
+        
+        predictions['QUANTITY'] = np.maximum(predictions['QUANTITY'], 0)
+        predictions['QUANTITY'] = np.round(predictions['QUANTITY'])
+        predictions = predictions.rename(columns={'QUANTITY': 'QUANTITY_PREDICTIONS'})
+        test_df = pd.merge(test_df, predictions, on=['DATE', grouping], how='left')
+        pred_values = test_df['QUANTITY_PREDICTIONS'].fillna(0).values
 
-        return test_df, self.evaluate(test_y, predictions)
+
+        return test_df, self.evaluate(test_y, pred_values)
 
     def predict_future(self, train_df, val_df, test_df, best_params, category):
         final_train = pd.concat([train_df, val_df, test_df], ignore_index=False)

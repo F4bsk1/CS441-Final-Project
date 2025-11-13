@@ -41,6 +41,8 @@ class Preprocessor:
         df_merged = df_merged[df_merged['QUANTITY'].notna()]  # remove NaN
         df_merged = df_merged[df_merged['QUANTITY'] >= 0]     # remove negatives
         df_merged = df_merged[df_merged['QUANTITY'] <= 1000]
+
+
         df_merged['HOUR'] = pd.to_datetime(df_merged['TIME'], format='%H:%M:%S').dt.hour
         print("before group by in preprocess")
         print(df_merged.columns)
@@ -53,6 +55,7 @@ class Preprocessor:
         else:
             df_merged['DATE'] = pd.to_datetime(df_merged['DATE'], format='%d.%m.%y')
 
+        df_merged = df_merged[df_merged['DATE'] <= pd.to_datetime('08.12.2024', format='%d.%m.%Y')]
 
         print(df_merged.head())
         #fill skus for each day

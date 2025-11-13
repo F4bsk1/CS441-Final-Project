@@ -51,8 +51,8 @@ class XGBoostPredictor(ModelPredictor):
             raise RuntimeError("No model fitted, call fit first")
         test_X_copy = self._prep_dataset(test_X)
         preds = self._model.predict(test_X_copy)
-        test_X['QUANTITY_PREDICTIONS'] = preds
-        return preds
+        test_X['QUANTITY'] = preds
+        return test_X
         preds = []
         window = test_X.iloc[-1].to_numpy().reshape(1, -1)
         #for _ in range(n_steps):
