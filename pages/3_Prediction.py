@@ -42,39 +42,41 @@ if "schnitzelPredictorDataset" in st.session_state:
         st.session_state.train_set, st.session_state.validation_set, st.session_state.test_set = dataset.get_dataset_splits(grouping)
         st.success("Data splits created successfully!")
         st.session_state.split_done = True
-
-    if st.toggle("Hyperparameter Settings"):
-        if model == "XGBoost": 
-            st.session_state.param_grid = {
-                                "n_estimators": [300, 600],
-                                "learning_rate": [0.05, 0.1],
-                                "max_depth": [3, 5],
-                                "min_child_weight": [1, 3],
-                                "subsample": [0.8],
-                                "colsample_bytree": [0.8],
-                                "reg_alpha": [0, 0.1],
-                                "reg_lambda": [0, 1, 5],
-                                "booster": ["gbtree"],
-                                "tree_method": ["hist"],
-                            }
-            st.session_state.best_params = {
-                    
-                }
-            
-        if model == "SARIMA":
-            st.session_state.param_grid = {
-                    "p": [0, 1, 3, 7, 8],
-                    "d": [0, 1, 2],
-                    "q": [0, 1, 2],
-                    "P": [0, 1, 2],
-                    "D": [0, 1],
-                    "Q": [0, 1, 2],
-                    "s": [7] 
-                }
-            st.session_state.best_params = {
-                'order': (3, 2, 2), 
-                'seasonal_order': (2, 1, 2, 7)
+    if model == "XGBoost": 
+        st.session_state.param_grid = {
+                            "n_estimators": [300, 600],
+                            "learning_rate": [0.05, 0.1],
+                            "max_depth": [3, 5],
+                            "min_child_weight": [1, 3],
+                            "subsample": [0.8],
+                            "colsample_bytree": [0.8],
+                            "reg_alpha": [0, 0.1],
+                            "reg_lambda": [0, 1, 5],
+                            "booster": ["gbtree"],
+                            "tree_method": ["hist"],
+                        }
+        st.session_state.best_params = {
+                
             }
+        
+    elif model == "SARIMA":
+        st.session_state.param_grid = {
+                "p": [0, 1, 3, 7, 8],
+                "d": [0, 1, 2],
+                "q": [0, 1, 2],
+                "P": [0, 1, 2],
+                "D": [0, 1],
+                "Q": [0, 1, 2],
+                "s": [7] 
+            }
+        st.session_state.best_params = {
+            'order': (3, 2, 2), 
+            'seasonal_order': (2, 1, 2, 7)
+        }
+    else:
+        raise ValueError("No Model selected!")
+    if st.toggle("Hyperparameter Settings"):
+        
         cols = st.columns(2)
         with cols[0]:
             st.session_state.param_grid = json.loads(st.text_area("Parameter Grid", value=json.dumps(st.session_state.param_grid)))
@@ -97,7 +99,16 @@ if "schnitzelPredictorDataset" in st.session_state:
         except ValueError as e:
             st.error(str(e))
 
-    model_predictor = SARIMAPredictor(pred_horizon=test_split_days)
+    if model == 'XGBoost':
+        model_predictor = XGBoostPredictor(pred_horizon=test_split_days)
+    elif model == 'SARIMA':
+        model_predictor = SARIMAPredictor(pred_horizon=test_split_days)
+    elif model == 'LSTM':
+        pass
+        # Placeholder for LSTM training logic
+    elif model == 'Transformer':
+        pass
+        # Placeholder for Transformer training logic
 
     st.subheader("Model Training")
     if st.button("Find Best Params"):
@@ -106,16 +117,8 @@ if "schnitzelPredictorDataset" in st.session_state:
             # Placeholder for model training logic
         else:
             st.text(f"Finding Best Params for {model} model on Validation Set...")
-            if model == 'XGBoost':
-                st.session_state.best_params, st.session_state.best_val_rmse = model_predictor.find_best_params(st.session_state.train_set, st.session_state.validation_set, st.session_state.test_set)
-            elif model == 'SARIMA':
-                st.session_state.best_params, st.session_state.best_val_rmse = model_predictor.find_best_params(st.session_state.train_set, st.session_state.validation_set, st.session_state.test_set)
-            elif model == 'LSTM':
-                pass
-                # Placeholder for LSTM training logic
-            elif model == 'Transformer':
-                pass
-                # Placeholder for Transformer training logic
+            st.session_state.best_params, st.session_state.best_val_rmse = model_predictor.find_best_params(st.session_state.train_set, st.session_state.validation_set, st.session_state.test_set, st.session_state.param_grid)
+
             st.success("Best parameters found!")
             st.session_state.best_params_found = True
 
