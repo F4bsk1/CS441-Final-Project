@@ -21,8 +21,8 @@ articles = st.file_uploader("Upload Articles File", type=["csv"], key="file_arti
 # Read and display the data if both files are uploaded
 if transaction_details is not None and transaction_header is not None and product_groups is not None and articles is not None:
     # Read files into pandas DataFrames
-    df_transaction_details = pd.read_csv(transaction_details, delimiter=';')
-    df_transaction_header = pd.read_csv(transaction_header, delimiter=';')
+    df_transaction_details = pd.read_csv(transaction_details, delimiter=';', encoding="windows-1252")
+    df_transaction_header = pd.read_csv(transaction_header, delimiter=';', encoding="windows-1252")
     df_product_groups = pd.read_csv(product_groups, delimiter=';')
     df_articles = pd.read_csv(articles, delimiter=';')
 
@@ -53,7 +53,7 @@ if st.button("Preprocess Data"):
         
         #st.success("Data preprocessed successfully!")
         st.subheader("Preview of Preprocessed Data")
-        st.dataframe(st.session_state.schnitzelPredictorDataset.get_dataset())
+        st.dataframe(st.session_state.schnitzelPredictorDataset.get_dataset().head())
 
     else:
         st.error("Please upload all required files before preprocessing.")
