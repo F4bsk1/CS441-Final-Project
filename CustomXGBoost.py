@@ -8,14 +8,14 @@ from sklearn.preprocessing import LabelEncoder
 
 
 class XGBoostPredictor(ModelPredictor):
-    def __init__(self, hyperparameter_list=None, pred_horizon = 7):
-        super().__init__("XGBoost", hyperparameter_list or {})
+    def __init__(self, pred_horizon = 7):
+        super().__init__("XGBoost")
         self.le = LabelEncoder()
         #self.feature_cols = feature_cols
         #self.target_col = target_col
         self.pred_horizon = pred_horizon
 
-    def fit(self, train_X, train_y, hyperparameters = None, store_model = True):
+    def fit(self, train_X, train_y, hyperparameters = None, store_model = True, progress_callback=None):
         """the model params, target and features are specified when instanstiated
             simple hyperparam tuning are used (UPDATE LATER)"""
         #convert the dfs into DMatrixes for faster proccessing
@@ -51,6 +51,7 @@ class XGBoostPredictor(ModelPredictor):
             raise RuntimeError("No model fitted, call fit first")
         test_X_copy = self._prep_dataset(test_X)
         preds = self._model.predict(test_X_copy)
+        test_X = test_X.copy()
         test_X['QUANTITY'] = preds
         return test_X
         preds = []
@@ -84,7 +85,7 @@ class XGBoostPredictor(ModelPredictor):
     def evaluate(self, y_true, predictions):
         return root_mean_squared_error(y_true, predictions), r2_score(y_true, predictions)
 
-    def tune_hyperparameters(self, train_X, train_y, val_X, val_y, hyperparameter_list):
+    def tune_hyperparameters(self, train_X, train_y, val_X, val_y, hyperparameter_list, progress_callback=None):
         #simple grid search for hyperparameter tuning
         val_transform_done = False
 

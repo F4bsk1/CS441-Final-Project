@@ -5,11 +5,10 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 from sklearn.metrics import root_mean_squared_error, r2_score
 
 class SARIMAPredictor(ModelPredictor):
-    def __init__(self, hyperparameter_list=None, pred_horizon=7):
+    def __init__(self, pred_horizon=7):
         super().__init__("SARIMA", pred_horizon)
         self.models_per_category = {}
         self.pred_horizon = pred_horizon
-        self.hyperparameter_list = hyperparameter_list or {}
     
     def _get_grouping_column(self, df):
         if 'MAIN_GROUP' in df.columns:
@@ -21,7 +20,7 @@ class SARIMAPredictor(ModelPredictor):
         else:
             raise ValueError("No valid grouping column found")
 
-    def fit(self, train_X, train_y, hyperparameters=None, store_model=True):
+    def fit(self, train_X, train_y, hyperparameters=None, store_model=True, progress_callback=None):
         train_X_copy = train_X.copy()
         train_y_copy = train_y.copy()
         grouping = self._get_grouping_column(train_X_copy)
@@ -31,8 +30,11 @@ class SARIMAPredictor(ModelPredictor):
         seasonal_order = hyperparameters.get("seasonal_order", (2,1,1,7))
         print(f"order: {order}, seasonal_order: {seasonal_order}")
         categories = train_X_copy[grouping].unique()
+        total_cats = len(categories)
 
-        for cat in categories:
+        for idx, cat in enumerate(categories):
+            if progress_callback:
+                progress_callback(idx + 1, total_cats, f"Fitting SARIMA for category: {cat}")
             cat_mask = train_X_copy[grouping] == cat
             cat_data = pd.DataFrame({
                 'DATE': train_X_copy.loc[cat_mask, 'DATE'].values,
@@ -54,7 +56,6 @@ class SARIMAPredictor(ModelPredictor):
         return self.models_per_category
 
     def predict(self, test_X):
-        preds = np.zeros(len(test_X))
         test_X_copy = test_X.copy().reset_index(drop=True)
         grouping = self._get_grouping_column(test_X_copy)
         pred_df = pd.DataFrame()
@@ -70,8 +71,8 @@ class SARIMAPredictor(ModelPredictor):
             n_test_samples = len(cat_test)
             
             try:
-                forecast = model.get_forecast(steps=n_test_samples).predicted_mean
-                cat_test['QUANTITY'] = forecast
+                forecast = model.get_forecast(steps=n_test_samples)
+                cat_test['QUANTITY'] = np.array(forecast.predicted_mean)[:n_test_samples]
                 pred_df = pd.concat([pred_df, cat_test])
             except Exception as e:
                 print(f"Error predicting {cat}: {e}")
@@ -86,7 +87,7 @@ class SARIMAPredictor(ModelPredictor):
         r2 = r2_score(y_true, predictions)
         return rmse, r2
 
-    def tune_hyperparameters(self, train_X, train_y, val_X, val_y, hyperparameter_list):
+    def tune_hyperparameters(self, train_X, train_y, val_X, val_y, hyperparameter_list, progress_callback=None):
         best_rmse = float("inf")
         best_params = {
             "order": (1, 1, 0),
@@ -103,6 +104,9 @@ class SARIMAPredictor(ModelPredictor):
         s_values = hyperparameter_list.get("s", [7])
 
         categories = train_X[grouping].unique()
+        
+        total_combinations = len(p_values) * len(d_values) * len(q_values) * len(P_values) * len(D_values) * len(Q_values) * len(s_values)
+        current_combination = 0
 
         for p in p_values:
             for d in d_values:
@@ -111,10 +115,16 @@ class SARIMAPredictor(ModelPredictor):
                         for D in D_values:
                             for Q in Q_values:
                                 for s in s_values:
+                                    current_combination += 1
                                     current_order = (p, d, q)
                                     current_seasonal = (P, D, Q, s)
                                     rmses = []
-                                    print(f"Testing {current_order}, {current_seasonal}")
+                                    
+                                    if progress_callback:
+                                        progress_callback(current_combination, total_combinations, 
+                                                        f"Testing order={current_order}, seasonal={current_seasonal}")
+                                    else:
+                                        print(f"Testing {current_order}, {current_seasonal}")
 
                                     for cat in categories:
                                         train_cat_mask = train_X[grouping] == cat

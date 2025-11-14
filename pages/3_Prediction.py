@@ -128,8 +128,18 @@ if "schnitzelPredictorDataset" in st.session_state:
             # Placeholder for model training logic
         else:
             st.text(f"Finding Best Params for {model} model on Validation Set...")
-            st.session_state.best_params, st.session_state.best_val_rmse = model_predictor.find_best_params(st.session_state.train_set, st.session_state.validation_set, st.session_state.test_set, st.session_state.param_grid)
+            progress_bar = st.progress(0)
+            status_text = st.empty()
 
+            def update_progress(current, total, message):
+                progress = current / total if total > 0 else 0
+                progress_bar.progress(progress)
+                status_text.text(f"{message} ({current}/{total})")
+        
+
+            st.session_state.best_params, st.session_state.best_val_rmse = model_predictor.find_best_params(st.session_state.train_set, st.session_state.validation_set, st.session_state.test_set, st.session_state.param_grid, update_progress)
+            progress_bar.progress(1.0)
+            status_text.text("Complete!")
             st.success("Best parameters found!")
             st.session_state.best_params_found = True
 
@@ -138,9 +148,24 @@ if "schnitzelPredictorDataset" in st.session_state:
             st.error("Please create data splits before training the model.")
             # Placeholder for model training logic
         else:
-            st.text(f"Predicting Data...")
-            print(st.session_state.best_params)
-            st.session_state.results_test, st.session_state.eval = model_predictor.run_on_test(st.session_state.train_set, st.session_state.validation_set, st.session_state.test_set, st.session_state.best_params)
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            def update_progress(current, total, message):
+                progress = current / total if total > 0 else 0
+                progress_bar.progress(progress)
+                status_text.text(f"{message} ({current}/{total})")
+            
+            st.session_state.results_test, st.session_state.eval = model_predictor.run_on_test(
+                st.session_state.train_set, 
+                st.session_state.validation_set, 
+                st.session_state.test_set, 
+                st.session_state.best_params,
+                progress_callback=update_progress  # <-- Add this
+            )
+            
+            progress_bar.progress(1.0)
+            status_text.text("Complete!")
             st.success("Model trained successfully!")
             st.session_state.model_trained = True
             #st.session_state.results_pred = model_predictor.predict_future(st.session_state.train_set, st.session_state.validation_set, st.session_state.test_set)
