@@ -27,21 +27,48 @@ if "schnitzelPredictorDataset" in st.session_state:
     if "best_params_found" not in st.session_state:
         st.session_state.best_params_found = False
 
-    cols = st.columns(4)
+    cols = st.columns(5)
     with cols[0]:
         test_split_days = st.number_input("Number of days for test set:", key="test_split_days", value=7)
     with cols[1]:
         val_split_days = st.number_input("Number of days for validation set:", key="val_split_days", value=7)
     with cols[2]:
-        grouping = st.selectbox("Select grouping for predictions:", options=['ARTICLE', 'PRODUCT_GROUP', 'MAIN_GROUP', 'NONE'], key="grouping")
+        pred_horizon = st.number_input("Predictor horizon:", value=7)
     with cols[3]:
+        grouping = st.selectbox("Select grouping for predictions:", options=['ARTICLE', 'PRODUCT_GROUP', 'MAIN_GROUP', 'NONE'], key="grouping")
+    with cols[4]:
         model = st.selectbox("Select prediction model:", options=['XGBoost', 'SARIMA', 'LSTM', 'Transformer'], key="model")
 
     if st.button("Create Data Splits"):
         dataset.create_split_annotated_dataset(val_split_days=val_split_days, test_split_days=test_split_days)
-        st.session_state.train_set, st.session_state.validation_set, st.session_state.test_set = dataset.get_dataset_splits(grouping)
+        
+        # Get raw splits from dataset
+        raw_train, raw_val, raw_test = dataset.get_dataset_splits(grouping)
+        
+        if model == "XGBoost":
+            # XGBoost: Create predictor, prepare data ONCE, store in session_state
+            xgb_predictor = XGBoostPredictor(pred_horizon=pred_horizon) #pred_horizon is the number of days to predict ahead
+            
+            # prepare_data() engineers features and stores them internally
+            # Returns engineered data for display
+            eng_train, eng_val, eng_test = xgb_predictor.prepare_data(raw_train, raw_val, raw_test)
+            
+            # Store predictor in session_state (so state persists across button clicks)
+            st.session_state.xgb_predictor = xgb_predictor
+            
+            # Store engineered data for display
+            st.session_state.train_set = eng_train
+            st.session_state.validation_set = eng_val
+            st.session_state.test_set = eng_test
+        else:
+            # SARIMA: Use raw data (unchanged from original)
+            st.session_state.train_set = raw_train
+            st.session_state.validation_set = raw_val
+            st.session_state.test_set = raw_test
+        
         st.success("Data splits created successfully!")
         st.session_state.split_done = True
+        
     if model == "XGBoost": 
         st.session_state.param_grid = {
                             "n_estimators": [300, 600],
@@ -110,22 +137,16 @@ if "schnitzelPredictorDataset" in st.session_state:
         except ValueError as e:
             st.error(str(e))
 
-    if model == 'XGBoost':
-        model_predictor = XGBoostPredictor(pred_horizon=test_split_days)
-    elif model == 'SARIMA':
-        model_predictor = SARIMAPredictor(pred_horizon=test_split_days)
-    elif model == 'LSTM':
-        pass
-        # Placeholder for LSTM training logic
-    elif model == 'Transformer':
-        pass
-        # Placeholder for Transformer training logic
-
     st.subheader("Model Training")
+    
+    # XGBoost tuning options
+    if model == "XGBoost":
+        extensive_tuning = st.checkbox("Extensive tuning (72 combinations, slower)", value=False)
+        st.caption("Quick: 3 combinations | Extensive: tests n_estimators, learning_rate, max_depth, subsample, colsample, min_child_weight, reg_lambda")
+    
     if st.button("Find Best Params"):
         if not st.session_state.split_done:
             st.error("Please create data splits before training the model.")
-            # Placeholder for model training logic
         else:
             st.text(f"Finding Best Params for {model} model on Validation Set...")
             progress_bar = st.progress(0)
@@ -136,8 +157,20 @@ if "schnitzelPredictorDataset" in st.session_state:
                 progress_bar.progress(progress)
                 status_text.text(f"{message} ({current}/{total})")
         
-
-            st.session_state.best_params, st.session_state.best_val_rmse = model_predictor.find_best_params(st.session_state.train_set, st.session_state.validation_set, st.session_state.test_set, st.session_state.param_grid, update_progress)
+            if model == "XGBoost":
+                # XGBoost: Use stored predictor (data already prepared)
+                xgb_predictor = st.session_state.xgb_predictor
+                st.session_state.best_params, st.session_state.best_val_rmse = xgb_predictor.find_best_params(
+                    update_progress, extensive=extensive_tuning
+                )
+            else:
+                # SARIMA: Use base class interface (unchanged)
+                model_predictor = SARIMAPredictor(pred_horizon=test_split_days)
+                st.session_state.best_params, st.session_state.best_val_rmse = model_predictor.find_best_params(
+                    st.session_state.train_set, st.session_state.validation_set, 
+                    st.session_state.test_set, st.session_state.param_grid, update_progress
+                )
+            
             progress_bar.progress(1.0)
             status_text.text("Complete!")
             st.success("Best parameters found!")
@@ -146,7 +179,6 @@ if "schnitzelPredictorDataset" in st.session_state:
     if st.button("Prediction and Test Evaluation"):
         if not st.session_state.split_done:
             st.error("Please create data splits before training the model.")
-            # Placeholder for model training logic
         else:
             progress_bar = st.progress(0)
             status_text = st.empty()
@@ -156,31 +188,86 @@ if "schnitzelPredictorDataset" in st.session_state:
                 progress_bar.progress(progress)
                 status_text.text(f"{message} ({current}/{total})")
             
-            st.session_state.results_test, st.session_state.eval = model_predictor.run_on_test(
-                st.session_state.train_set, 
-                st.session_state.validation_set, 
-                st.session_state.test_set, 
-                st.session_state.best_params,
-                progress_callback=update_progress  # <-- Add this
-            )
+            if model == "XGBoost":
+                # XGBoost: Use stored predictor (data already prepared)
+                xgb_predictor = st.session_state.xgb_predictor
+                st.session_state.results_test, st.session_state.eval = xgb_predictor.run_on_test(
+                    st.session_state.best_params, update_progress
+                )
+            else:
+                # SARIMA: Use base class interface (unchanged)
+                model_predictor = SARIMAPredictor(pred_horizon=test_split_days)
+                st.session_state.results_test, st.session_state.eval = model_predictor.run_on_test(
+                    st.session_state.train_set, st.session_state.validation_set, 
+                    st.session_state.test_set, st.session_state.best_params,
+                    progress_callback=update_progress
+                )
             
             progress_bar.progress(1.0)
             status_text.text("Complete!")
             st.success("Model trained successfully!")
             st.session_state.model_trained = True
-            #st.session_state.results_pred = model_predictor.predict_future(st.session_state.train_set, st.session_state.validation_set, st.session_state.test_set)
 
     st.subheader("Model Evaluation")
+    
+    # Validation Results
     if st.session_state.best_params_found:
-        st.text(f"**Evaluation Metrics - Validation Set:**")
-        st.text(f"Best Hyperparameters: {st.session_state.best_params}")
-        st.text(f"Best Validation RMSE during tuning: {st.session_state.best_val_rmse}")
+        st.markdown("#### Validation Set Results")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Validation RMSE", f"{st.session_state.best_val_rmse:.4f}")
+        with col2:
+            with st.expander("Best Hyperparameters"):
+                st.json(st.session_state.best_params)
+    
+    # Test Results
     if st.session_state.model_trained:
-        if st.toggle("Show Result Dataset - Test"):
+        st.markdown("#### Test Set Results")
+        
+        # Metrics in columns
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("RMSE", f"{st.session_state.eval[0]:.4f}")
+        with col2:
+            st.metric("R² Score", f"{st.session_state.eval[1]:.4f}")
+        with col3:
+            me = st.session_state.eval[2]
+            st.metric("Mean Error", f"{me:.4f}", delta=f"{'overpredict' if me < 0 else 'underpredict'}")
+        
+        # Expandable sections
+        with st.expander("Show Test Dataset"):
             st.dataframe(st.session_state.results_test)
-        st.text(f"**Evaluation Metrics - Test Set:**")
-        st.text(f"Root Mean Squared Error (RMSE): {st.session_state.eval[0]}")
-        st.text(f"R-squared (R2) Score: {st.session_state.eval[1]}")
+        
+        # Feature Importance (XGBoost only)
+        if model == "XGBoost" and "xgb_predictor" in st.session_state:
+            try:
+                importance_df = st.session_state.xgb_predictor.get_feature_importance()
+                with st.expander("Feature Importance"):
+                    st.bar_chart(importance_df.set_index('feature')['importance'])
+                    st.dataframe(importance_df)
+                    
+                    # Show low importance features
+                    threshold = 0.005  # 0.5%
+                    low_imp = importance_df[importance_df['importance'] < threshold]
+                    if len(low_imp) > 0:
+                        st.markdown(f"**{len(low_imp)} features below {threshold*100:.1f}% importance:**")
+                        st.text(", ".join(low_imp['feature'].tolist()))
+                        
+                        if st.button("Drop low-importance features and retrain"):
+                            dropped, kept = st.session_state.xgb_predictor.drop_low_importance_features(threshold)
+                            st.success(f"Dropped {len(dropped)} features. Retraining with {len(kept)} features...")
+                            
+                            # Retrain
+                            results, metrics = st.session_state.xgb_predictor.run_on_test(st.session_state.best_params)
+                            st.session_state.results_test = results
+                            st.session_state.eval = metrics
+                            
+                            st.success(f"Retrained! New RMSE: {metrics[0]:.4f}, R²: {metrics[1]:.4f}")
+                            st.rerun()
+                    else:
+                        st.info("All features have importance >= 0.5%")
+            except RuntimeError:
+                pass  # Model not trained yet, skip feature importance
 
     st.subheader("Show Predictions")
     if st.session_state.model_trained:
@@ -201,7 +288,6 @@ if "schnitzelPredictorDataset" in st.session_state:
             st.dataframe(df_transformed)
             st.text("Combined DataFrame for Visualization:")
             st.dataframe(df_combined)
-        #st.dataframe(df_transformed)
 
         fig = px.line(
         df_combined,

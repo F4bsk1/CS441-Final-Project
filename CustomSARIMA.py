@@ -85,7 +85,8 @@ class SARIMAPredictor(ModelPredictor):
         y_true = np.nan_to_num(y_true, nan=0.0)
         rmse = root_mean_squared_error(y_true, predictions)
         r2 = r2_score(y_true, predictions)
-        return rmse, r2
+        me = np.mean(y_true - predictions) #mean error
+        return rmse, r2, me
 
     def tune_hyperparameters(self, train_X, train_y, val_X, val_y, hyperparameter_list, progress_callback=None):
         best_rmse = float("inf")
