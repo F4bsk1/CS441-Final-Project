@@ -37,7 +37,7 @@ if "schnitzelPredictorDataset" in st.session_state:
     with cols[3]:
         grouping = st.selectbox("Select grouping for predictions:", options=['ARTICLE', 'PRODUCT_GROUP', 'MAIN_GROUP', 'NONE'], key="grouping")
     with cols[4]:
-        model = st.selectbox("Select prediction model:", options=['XGBoost', 'SARIMA', 'LSTM', 'Transformer'], key="model")
+        model = st.selectbox("Select prediction model:", options=['XGBoost', 'SARIMA'], key="model")
 
     if st.button("Create Data Splits"):
         dataset.create_split_annotated_dataset(val_split_days=val_split_days, test_split_days=test_split_days)
@@ -160,13 +160,13 @@ if "schnitzelPredictorDataset" in st.session_state:
             if model == "XGBoost":
                 # XGBoost: Use stored predictor (data already prepared)
                 xgb_predictor = st.session_state.xgb_predictor
-                st.session_state.best_params, st.session_state.best_val_rmse = xgb_predictor.find_best_params(
+                st.session_state.best_params, st.session_state.best_val_mae = xgb_predictor.find_best_params(
                     update_progress, extensive=extensive_tuning
                 )
             else:
                 # SARIMA: Use base class interface (unchanged)
                 model_predictor = SARIMAPredictor(pred_horizon=test_split_days)
-                st.session_state.best_params, st.session_state.best_val_rmse = model_predictor.find_best_params(
+                st.session_state.best_params, st.session_state.best_val_mae = model_predictor.find_best_params(
                     st.session_state.train_set, st.session_state.validation_set, 
                     st.session_state.test_set, st.session_state.param_grid, update_progress
                 )
@@ -215,7 +215,7 @@ if "schnitzelPredictorDataset" in st.session_state:
         st.markdown("#### Validation Set Results")
         col1, col2 = st.columns(2)
         with col1:
-            st.metric("Validation RMSE", f"{st.session_state.best_val_rmse:.4f}")
+            st.metric("Validation MAE", f"{st.session_state.best_val_mae:.4f}")
         with col2:
             with st.expander("Best Hyperparameters"):
                 st.json(st.session_state.best_params)
@@ -231,8 +231,8 @@ if "schnitzelPredictorDataset" in st.session_state:
         with col2:
             st.metric("R² Score", f"{st.session_state.eval[1]:.4f}")
         with col3:
-            me = st.session_state.eval[2]
-            st.metric("Mean Error", f"{me:.4f}", delta=f"{'overpredict' if me < 0 else 'underpredict'}")
+            mae = st.session_state.eval[2]
+            st.metric("Mean Absolute Error", f"{mae:.4f}")
         
         # Expandable sections
         with st.expander("Show Test Dataset"):

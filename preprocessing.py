@@ -55,7 +55,7 @@ class Preprocessor:
         else:
             df_merged['DATE'] = pd.to_datetime(df_merged['DATE'], format='%d.%m.%y')
 
-        df_merged = df_merged[df_merged['DATE'] <= pd.to_datetime('08.12.2024', format='%d.%m.%Y')]
+        df_merged = df_merged[df_merged['DATE'] <= pd.to_datetime('01.12.2024', format='%d.%m.%Y')]
 
         print(df_merged.head())
         #fill skus for each day

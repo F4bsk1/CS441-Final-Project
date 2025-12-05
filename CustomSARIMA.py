@@ -2,7 +2,7 @@ from ModelPredictor import ModelPredictor
 import pandas as pd
 import numpy as np
 from statsmodels.tsa.statespace.sarimax import SARIMAX
-from sklearn.metrics import root_mean_squared_error, r2_score
+from sklearn.metrics import root_mean_squared_error, r2_score, mean_absolute_error
 
 class SARIMAPredictor(ModelPredictor):
     def __init__(self, pred_horizon=7):
@@ -71,7 +71,9 @@ class SARIMAPredictor(ModelPredictor):
             n_test_samples = len(cat_test)
             
             try:
+                print("start predicting")
                 forecast = model.get_forecast(steps=n_test_samples)
+                print("done predicting")
                 cat_test['QUANTITY'] = np.array(forecast.predicted_mean)[:n_test_samples]
                 pred_df = pd.concat([pred_df, cat_test])
             except Exception as e:
@@ -85,11 +87,11 @@ class SARIMAPredictor(ModelPredictor):
         y_true = np.nan_to_num(y_true, nan=0.0)
         rmse = root_mean_squared_error(y_true, predictions)
         r2 = r2_score(y_true, predictions)
-        me = np.mean(y_true - predictions) #mean error
-        return rmse, r2, me
+        mae = mean_absolute_error(y_true, predictions)
+        return rmse, r2, mae
 
     def tune_hyperparameters(self, train_X, train_y, val_X, val_y, hyperparameter_list, progress_callback=None):
-        best_rmse = float("inf")
+        best_mae = float("inf")
         best_params = {
             "order": (1, 1, 0),
             "seasonal_order": (0, 1, 1, 7)
@@ -119,7 +121,7 @@ class SARIMAPredictor(ModelPredictor):
                                     current_combination += 1
                                     current_order = (p, d, q)
                                     current_seasonal = (P, D, Q, s)
-                                    rmses = []
+                                    maes = []
                                     
                                     if progress_callback:
                                         progress_callback(current_combination, total_combinations, 
@@ -151,15 +153,15 @@ class SARIMAPredictor(ModelPredictor):
                                                             enforce_stationarity=False, enforce_invertibility=False)
                                             fitted_model = model.fit(disp=False, maxiter=200)
                                             forecast = fitted_model.forecast(steps=len(val_cat_y))
-                                            rmse = root_mean_squared_error(val_cat_y, forecast)
-                                            rmses.append(rmse)
+                                            mae = mean_absolute_error(val_cat_y, forecast)
+                                            maes.append(mae)
                                         except Exception as e:
                                             continue
 
-                                    if rmses and np.mean(rmses) < best_rmse:
-                                        best_rmse = np.mean(rmses)
+                                    if maes and np.mean(maes) < best_mae:
+                                        best_mae = np.mean(maes)
                                         best_params = {"order": current_order, "seasonal_order": current_seasonal}
-                                        print(f"new best: {best_params} rmse: {best_rmse}")
+                                        print(f"new best: {best_params} mae: {best_mae}")
 
-        print(f"Best params: {best_params} RMSE: {best_rmse}")
-        return best_params, best_rmse
+        print(f"Best params: {best_params} MAE: {best_mae}")
+        return best_params, best_mae

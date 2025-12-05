@@ -32,7 +32,7 @@ class ModelPredictor(ABC):
         test_X = test_df.drop(columns=['QUANTITY'])
         test_y = test_df['QUANTITY']
 
-        best_params, best_val_rmse = self.tune_hyperparameters(train_X, train_y, val_X, val_y, hyperparameter_list, progress_callback)
+        best_params, best_val_mae = self.tune_hyperparameters(train_X, train_y, val_X, val_y, hyperparameter_list, progress_callback)
         #to be fixed
         #final_train = pd.concat([train_df, val_df], ignore_index=False)
 
@@ -60,7 +60,7 @@ class ModelPredictor(ABC):
         #test_out['QUANTITY_TRUE'] = test_y
 
         
-        return best_params, best_val_rmse
+        return best_params, best_val_mae
 
     def run_on_test(self, train_df, val_df, test_df, best_params, progress_callback=None):
         test_X = test_df.drop(columns=['QUANTITY'])

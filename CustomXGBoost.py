@@ -12,7 +12,7 @@ from ModelPredictor import ModelPredictor
 from xgboost import XGBRegressor
 import numpy as np
 import pandas as pd
-from sklearn.metrics import root_mean_squared_error, r2_score
+from sklearn.metrics import root_mean_squared_error, r2_score, mean_absolute_error
 from sklearn.preprocessing import LabelEncoder
 
 
@@ -263,7 +263,7 @@ class XGBoostPredictor(ModelPredictor):
                 {"n_estimators": 800, "learning_rate": 0.05, "max_depth": 6, "subsample": 0.9, "colsample_bytree": 0.9},
             ]
         
-        best_rmse = float("inf")
+        best_mae = float("inf")
         best_params = param_grid[0]
         
         for i, params in enumerate(param_grid):
@@ -273,18 +273,18 @@ class XGBoostPredictor(ModelPredictor):
             # Use core methods
             self.fit(X_train, y_train, params)
             preds = self.predict(X_val)
-            rmse, _, _ = self.evaluate(y_val, preds)
+            _, _, mae = self.evaluate(y_val, preds)
             
-            if rmse < best_rmse:
-                best_rmse = rmse
+            if mae < best_mae:
+                best_mae = mae
                 best_params = params.copy()
-                print(f"New best (#{i+1}): RMSE={rmse:.4f}")
+                print(f"New best (#{i+1}): MAE={mae:.4f}")
                 print(f"  Params: {best_params}")
         
         print(f"\nBest params found: {best_params}")
-        print(f"Best validation RMSE: {best_rmse:.4f}")
+        print(f"Best validation MAE: {best_mae:.4f}")
         
-        return best_params, best_rmse
+        return best_params, best_mae
 
     def run_on_test(self, best_params, progress_callback=None):
         """
@@ -314,17 +314,17 @@ class XGBoostPredictor(ModelPredictor):
         preds = np.round(preds)
         
         # Evaluate using core evaluate()
-        rmse, r2, me = self.evaluate(y_test, preds)
+        rmse, r2, mae = self.evaluate(y_test, preds)
         
         if progress_callback:
-            progress_callback(2, 2, f"Done! RMSE: {rmse:.3f}, R²: {r2:.3f}, ME: {me:.3f}")
+            progress_callback(2, 2, f"Done! MAE: {rmse:.3f}, R²: {r2:.3f}, MAE: {mae:.3f}")
         
         # Build results DataFrame
         results = self._test_eng.copy()
         results = results.rename(columns={"QUANTITY": "QUANTITY_TRUE"})
         results["QUANTITY_PREDICTIONS"] = preds
         
-        return results, (rmse, r2, me)
+        return results, (rmse, r2, mae)
 
     # CORE METHODS - Used internally by find_best_params and run_on_test    
     def fit(self, X, y, params=None):
@@ -376,8 +376,8 @@ class XGBoostPredictor(ModelPredictor):
         """
         rmse = root_mean_squared_error(y_true, y_pred)
         r2 = r2_score(y_true, y_pred)
-        me = np.mean(y_true - y_pred)
-        return rmse, r2, me
+        mae = mean_absolute_error(y_true, y_pred)
+        return rmse, r2, mae
 
     def get_feature_importance(self):
         """
