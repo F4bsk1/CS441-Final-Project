@@ -44,9 +44,11 @@ class SARIMAPredictor(ModelPredictor):
             cat_y = cat_data['QUANTITY'].values
             
             try:
+                print("start fitting")
                 model = SARIMAX(cat_y, order=order, seasonal_order=seasonal_order, 
                               enforce_stationarity=False, enforce_invertibility=False)
                 fit_model = model.fit(disp=False, maxiter=200)
+                print("done fitting")
                 if store_model:
                     self.models_per_category[cat] = fit_model
             except Exception as e:
@@ -72,6 +74,7 @@ class SARIMAPredictor(ModelPredictor):
             
             try:
                 print("start predicting")
+
                 forecast = model.get_forecast(steps=n_test_samples)
                 print("done predicting")
                 cat_test['QUANTITY'] = np.array(forecast.predicted_mean)[:n_test_samples]
