@@ -73,11 +73,11 @@ class SchnitzelPredictorDataset:
         print("in grouping")
         print(df_preprocessed, feature)
         if "SPLIT" in df_preprocessed.columns:
-            df_grouped_by_day = df_preprocessed.groupby(['DATE', 'YEAR', 'MONTH', 'DAY', 'DAYOFWEEK', 'WEEKOFYEAR', 'IS_WEEKEND', feature, 'SPLIT']).agg({
+            df_grouped_by_day = df_preprocessed.groupby(['DATE', 'YEAR', 'MONTH', 'DAY', feature, 'SPLIT']).agg({
                 'QUANTITY': 'sum',
             }).reset_index()
         else:   
-            df_grouped_by_day = df_preprocessed.groupby(['DATE', 'YEAR', 'MONTH', 'DAY', 'DAYOFWEEK', 'WEEKOFYEAR', 'IS_WEEKEND', feature]).agg({
+            df_grouped_by_day = df_preprocessed.groupby(['DATE', 'YEAR', 'MONTH', 'DAY', feature]).agg({
                 'QUANTITY': 'sum',
             }).reset_index()
 
@@ -87,16 +87,16 @@ class SchnitzelPredictorDataset:
         #df_grouped_by_day['lag_4'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(4)
         #df_grouped_by_day['lag_5'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(5)
         #df_grouped_by_day['lag_6'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(6)
-        df_grouped_by_day['lag_7'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(7)
-        df_grouped_by_day['lag_14'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(14)
-        df_grouped_by_day['lag_21'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(21)
-        df_grouped_by_day['lag_28'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(28)
-        df_grouped_by_day['lag_35'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(35)
-        df_grouped_by_day['lag_42'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(42)
-        df_grouped_by_day['lag_49'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(49)
-        df_grouped_by_day['lag_56'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(56)
-        df_grouped_by_day['lag_63'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(63)
-        df_grouped_by_day['lag_70'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(70)
+        #df_grouped_by_day['lag_7'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(7)
+        #df_grouped_by_day['lag_14'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(14)
+        #df_grouped_by_day['lag_21'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(21)
+        #df_grouped_by_day['lag_28'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(28)
+        #df_grouped_by_day['lag_35'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(35)
+        #df_grouped_by_day['lag_42'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(42)
+        #df_grouped_by_day['lag_49'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(49)
+        #df_grouped_by_day['lag_56'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(56)
+        #df_grouped_by_day['lag_63'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(63)
+        #df_grouped_by_day['lag_70'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(70)
         #df_grouped_by_day['rolling_7'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(1).rolling(window=7).mean()
         #df_grouped_by_day['rolling_28'] = df_grouped_by_day.groupby(feature)['QUANTITY'].shift(1).rolling(window=28).mean()
 

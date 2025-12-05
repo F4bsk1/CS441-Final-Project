@@ -76,13 +76,13 @@ class Preprocessor:
         df_merged['YEAR'] = df_merged['DATE'].dt.year
         df_merged['MONTH'] = df_merged['DATE'].dt.month
         df_merged['DAY'] = df_merged['DATE'].dt.day
-        df_merged['DAYOFWEEK'] = df_merged['DATE'].dt.dayofweek
-        df_merged['WEEKOFYEAR'] = df_merged['DATE'].dt.isocalendar().week.astype(int)
-        df_merged['IS_WEEKEND'] = df_merged['DAYOFWEEK'].isin([5,6]).astype(int)
+        #df_merged['DAYOFWEEK'] = df_merged['DATE'].dt.dayofweek
+        #df_merged['WEEKOFYEAR'] = df_merged['DATE'].dt.isocalendar().week.astype(int)
+       # df_merged['IS_WEEKEND'] = df_merged['DAYOFWEEK'].isin([5,6]).astype(int)
         #df_merged = df_merged.drop(columns=['DATE'])
 
         #create timelags
-        df_merged = df_merged[df_merged['MAIN_GROUP'] == "Main Dishes"]  #remove rows with NaN QUANTITY
+        #df_merged = df_merged[df_merged['MAIN_GROUP'] == "Main Dishes"] 
         
         schnitzelPredictorDataset = SchnitzelPredictorDataset(df_merged)
 
