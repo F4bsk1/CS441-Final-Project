@@ -1,8 +1,6 @@
-# CS441-Final-Project
+# SchnitzelPredictor
 
-Sales Forecasting / Demand Prediction
-
-Goal: Predict the number of sales per menu item for the next hour/day.
+Forecast the number of sold menu items based on POS history exports.
 
 ## Development environment
 
